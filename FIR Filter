@@ -1,0 +1,65 @@
+import numpy as np        #Memasukkan modul numpy untuk menghitung persamaan matematika
+import scipy.signal as py #Memasukkan modul scipy untuk mengolah sinyal
+import pylab as plt       #Memasukkan modul pylab untuk plot grafik
+
+#Mendefinisikan sinyal yang akan diolah
+N = 750                   #Mendefinisikan jumlah data sample
+n = 100.0                 #Sample rate
+t = np.arange(N)/n        #mendefinisikan waktu sample
+xa = np.random.rand(N,1)  #Mengambil nilai random
+x = xa - np.median(xa)    #mendefinisikan nilai x berupa nilai median dari data random
+
+#Memasukkan Filter FIR dan mengaplikasikan ke fungsi sinyal x
+
+nyq_rate = n/2.0          #nyquist rate signal
+width = 5.0/nyq_rate      #Mendesain filter dengan transition width 5 Hz
+ripple_db = 60.0          #redaman diinginkan dalam desibel
+N, beta = py.kaiserord(ripple_db, width) #menentukan parameter metode kaiser window
+cutoff_hz = 5.0           #membatasi frekuensi selain 5 hz untuk melewati filter
+taps =py.firwin(N, cutoff_hz/nyq_rate, window = ('kaiser', beta)) #membuat impulse response terbatas
+filtered_x = py.lfilter(taps, 1.0, x) #filter data satu dimensi dengan IIR atau FIR
+
+#Plot koefisien Filter FIR
+plt.figure(1)             #membuat grafik 1
+plt.plot(taps, 'bo-', linewidth=1) #memplot komponen grafik
+plt.title('Filter Coefficients (%d taps)' % N, color='gold') #judul grafik
+plt.tick_params (labelcolor='gold') #Memberi warna pada parameter 
+plt.grid(True)            #grid pada grafik
+
+#Plot nilai response dari filter
+w, h = py.freqz(taps, worN=8000) #frekuensi respons
+plt.figure(2)                    #membuat grafik 2
+plt.clf()                        #membersihkan seluruh gambar saat ini dengan semua sumbunya, tetapi membiarkan jendela terbuka, 
+                                 # sehingga dapat digunakan kembali untuk plot lainnya
+plt.plot((w/np.pi)*nyq_rate, np.absolute(h), linewidth=1) #plot komponen grafik
+plt.title('Frequency Response', color='gold') #memberi judul pada grafik plot
+plt.xlabel('frequency (Hz)', color='gold') #memberi label pada sumbu x
+plt.ylabel('Gain', color='gold') #memberi label pada sumbu y
+plt.ylim(-0.05, 1.05)            #membatasi rentang skala pada sumbu y
+plt.tick_params (labelcolor='gold') #Memberi warna pada parameter 
+plt.grid(True)                   #Membuat grid
+
+#Plot upper inset
+ax1 = plt.axes([0.42, 0.6, .45, .25]) #membuat sumbu dengan nilai tertentu
+plt.plot((w/np.pi)*nyq_rate, np.absolute(h), linewidth=1) #memplot komponen grafik
+plt.xlim(0.8, 0)                #membatasi rentang skala pada sumbu x
+plt.ylim(0.9985, 1.001)         #membatasi rentang skala pada sumbu y
+plt.grid(True)                  #Membuat grid
+
+#Plot lower inset
+ax2 = plt.axes([0.42, 0.25, .45, .25]) #membuat sumbu dengan nilai tertentu
+plt.plot((w/np.pi)*nyq_rate, np.absolute(h), linewidth=1) #memplot komponengrafik
+plt.xlim(12.0, 20.0)           #membatasi rentang skala pada sumbu x
+plt.ylim(0.0, 0.0025)          #membatasi rentang skala pada sumbu y
+plt.grid(True)                 #Membuat grid
+
+#Plot sinyal asli dan sinyal terfilter
+delay = 0.5*(N-1)/n            #Fase delay sinyal terfilter
+plt.figure(3)                  #membuat grafik 3
+plt.plot(t,x)                  #memplot komponen grafik
+plt.plot(t-delay, filtered_x, '-', color='red') 
+plt.plot(t[N-1:]-delay, filtered_x[N-1:], color='green', linewidth=1)
+plt.xlabel('t(s)', color = 'gold') #memberi label pada sumbu x
+plt.tick_params (labelcolor='gold') #Memberi warna pada parameter
+plt.grid(True)                 #Membuat grid
+plt.show()                     #menampilkan grafik
